@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "src/app/original.css"
+        ],
+        "createdAt": "2026-10-27T20:59:01.077Z",
+        "reason": "Agent: AGENTS.md requires preserving src/app/original.css as the original stylesheet; leave this baseline radio keyframe unchanged."
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+Home de eulán (HTML estático)
+
+El paquete contiene un único documento HTML, sus estilos, scripts y recursos visuales.
+Para visualizarlo, descomprime el ZIP, abre una terminal en esta carpeta y ejecuta:
+
+python3 -m http.server 8000
+
+Luego visita http://localhost:8000 en tu navegador.

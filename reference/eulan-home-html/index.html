@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es" data-theme="eulan">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f5f0" />
+    <meta name="description" content="Joyería eulán waterproof para el uso diario: baño PVD de oro 18K sobre acero inoxidable 316L." />
+    <title>eulán | Waterproof. Todo el día.</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Ir al contenido</a>
+    <header class="site-header navbar">
+      <div class="navbar-start">
+        <button class="mobile-trigger icon-button btn btn-ghost" id="menu-open" type="button" aria-label="Abrir menú" aria-controls="mobile-menu" aria-haspopup="dialog" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 7h18M3 17h18" /></svg>
+          <span>Menú</span>
+        </button>
+        <nav aria-label="Principal">
+          <ul class="desktop-nav menu menu-horizontal">
+            <li><a href="#coleccion/aros">AROS</a></li>
+            <li><a href="#coleccion/collares">COLLARES</a></li>
+            <li><a href="#universo">ACERCA DE EULÁN</a></li>
+          </ul>
+        </nav>
+      </div>
+      <div class="navbar-center">
+        <a class="brand" href="#inicio" aria-label="eulán, inicio">
+          <img src="assets/logo.svg" alt="eulán" width="134" height="41" />
+        </a>
+      </div>
+      <div class="navbar-end header-actions">
+        <button class="cart-trigger btn btn-ghost" id="cart-open" aria-label="Abrir carrito, 0 productos">
+          <svg class="cart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 1.9-1.5L21 8H6" />
+            <circle cx="9.5" cy="20" r="1" />
+            <circle cx="18" cy="20" r="1" />
+          </svg>
+          <span>Carrito</span>
+          <span class="cart-count" id="cart-count" aria-hidden="true">0</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="contenido" tabindex="-1"></main>
+
+    <footer class="site-footer">
+      <div class="footer-top">
+        <img src="assets/logo.svg" alt="eulán" width="235" height="71" />
+        <div>
+          <a href="#coleccion">Colección</a>
+          <a href="#universo">Universo eulán</a>
+          <button class="plain" id="guide-open">Sobre esta propuesta</button>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>Joyería contemporánea, Chile.</span>
+        <span>Catálogo e imágenes conceptuales. Diseño para revisión.</span>
+      </div>
+    </footer>
+
+    <dialog class="drawer" id="cart" aria-labelledby="cart-title">
+      <div class="dialog-head">
+        <h2 id="cart-title">Tu carrito</h2>
+        <button class="close" data-close="cart" aria-label="Cerrar carrito">×</button>
+      </div>
+      <div id="cart-items"></div>
+      <p class="drawer-note">Los precios, disponibilidad y pago se conectarán con el catálogo definitivo.</p>
+      <a class="button btn full" href="#coleccion">Seguir explorando</a>
+    </dialog>
+
+    <dialog class="info-dialog" id="guide" aria-labelledby="guide-title">
+      <div class="dialog-head">
+        <h2 id="guide-title">Una nueva dirección para eulán</h2>
+        <button class="close" data-close="guide" aria-label="Cerrar información">×</button>
+      </div>
+      <p>Este prototipo explora fotografía, navegación, fichas y piezas de campaña. El hero de escritorio es una imagen conceptual generada; los retratos en otras secciones son fotografías facilitadas por eulán. Las joyas del catálogo son propuestas visuales.</p>
+      <p>Materiales, tallas, precios, condiciones comerciales y catálogo real están por confirmar. El carrito funciona en este navegador y no se envía a terceros.</p>
+    </dialog>
+
+    <dialog class="drawer menu-dialog" id="mobile-menu" aria-labelledby="mobile-menu-title">
+      <div class="dialog-head">
+        <div class="menu-brand">
+          <img src="assets/logo.svg" alt="eulán" width="110" height="34" />
+          <h2 id="mobile-menu-title" class="sr-only">Navegación principal</h2>
+        </div>
+        <button class="close btn btn-ghost btn-circle" type="button" data-close="mobile-menu" aria-label="Cerrar menú">×</button>
+      </div>
+      <nav aria-label="Secciones del sitio">
+        <ul class="menu menu-vertical">
+          <li><a href="#coleccion/aros"><span>AROS</span><svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg></a></li>
+          <li><a href="#coleccion/collares"><span>COLLARES</span><svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg></a></li>
+          <li><a href="#universo"><span>ACERCA DE EULÁN</span><svg class="menu-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10" /></svg></a></li>
+        </ul>
+      </nav>
+      <p class="menu-footnote">Joyería contemporánea, Chile.</p>
+    </dialog>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
