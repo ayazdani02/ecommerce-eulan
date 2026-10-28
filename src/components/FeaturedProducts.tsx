@@ -183,7 +183,7 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
                         {product.name}
                       </span>
                       <span className="featured-open" aria-hidden="true">
-                        ↗
+                        <Icon name="arrow" />
                       </span>
                     </span>
                     <span className="featured-pricing">

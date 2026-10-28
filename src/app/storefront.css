@@ -1138,6 +1138,7 @@ body:has(.home-frame) .site-header.navbar {
 .product-image > .favorite-toggle { top: 6px; right: 6px; }
 .featured-product-heading { align-items: center; }
 .featured-open { flex-basis: 28px; width: 28px; height: 28px; }
+.featured-open .ui-icon { width: 14px; height: 14px; }
 @media (max-width: 767px) {
   .category-discovery { padding-inline: 20px; }
   .category-heading h2 { max-width: 30ch; font-size: clamp(19px, 5.3vw, 24px); }
