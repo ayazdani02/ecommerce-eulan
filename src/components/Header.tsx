@@ -102,6 +102,35 @@ export function Header() {
             ))}
           </ul>
         </nav>
+        <nav className="mobile-menu-utilities" aria-label="Tu cuenta">
+          <ul className="menu menu-vertical">
+            <li>
+              <Link href="/favoritos" onClick={() => setMenu(false)}>
+                <span className="mobile-menu-utility-label">
+                  <Icon name="heart" />
+                  Favoritos
+                </span>
+                {favoriteSlugs.length > 0 && (
+                  <span className="mobile-menu-count" aria-label={`${favoriteSlugs.length} favoritos`}>
+                    {favoriteSlugs.length}
+                  </span>
+                )}
+              </Link>
+            </li>
+            <li>
+              <a
+                href="https://gg0kzc-em.myshopify.com/account/login"
+                onClick={() => setMenu(false)}
+              >
+                <span className="mobile-menu-utility-label">
+                  <Icon name="user" />
+                  Iniciar sesión
+                </span>
+                <Icon name="arrow" />
+              </a>
+            </li>
+          </ul>
+        </nav>
         <p className="menu-footnote">Joyería contemporánea, Chile.</p>
       </Modal>
     </>

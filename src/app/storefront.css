@@ -1204,6 +1204,65 @@ body:has(.home-frame) .site-header.navbar {
   .benefit-story--pvd .benefit-story__content { padding: 32px 24px 48px; }
 }
 
+/* En móvil, reservar aire bajo el copy para los controles del hero. */
+@media (max-width: 767px) {
+  .immersive-hero {
+    height: min(82svh, 760px);
+    min-height: min(82svh, 640px);
+    max-height: 760px;
+  }
+  .immersive-hero .hero-copy {
+    bottom: clamp(94px, 12svh, 112px);
+    left: 20px;
+    width: calc(100% - 40px);
+  }
+  .immersive-hero .hero-controls {
+    right: 16px;
+    bottom: 16px;
+  }
+  .site-header .header-actions > .header-icon-link {
+    display: none;
+  }
+  .menu-dialog .mobile-menu-utilities {
+    flex: none;
+    align-self: stretch;
+    width: 100%;
+    max-width: 560px;
+    margin: 12px auto 20px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .menu-dialog .mobile-menu-utilities a {
+    display: flex;
+    min-height: 54px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .mobile-menu-utility-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .mobile-menu-utility-label .ui-icon,
+  .mobile-menu-utilities a > .ui-icon {
+    width: 19px;
+    height: 19px;
+  }
+  .mobile-menu-count {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
 /* Las tarjetas conservan su contorno; el foco se expresa con luz, no con salto. */
 .featured-slide {
   transform: none !important;
