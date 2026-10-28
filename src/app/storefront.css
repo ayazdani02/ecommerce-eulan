@@ -1385,6 +1385,9 @@ body:has(.home-frame) .site-header.navbar {
 @media (max-width: 767px), (pointer: coarse) {
   .featured-carousel-controls { display: none; }
   .hero-carousel { touch-action: pan-y; }
+  .hero-carousel .hero-slide.is-swipe-neighbor { visibility: visible; opacity: 1; z-index: 2; }
+  .hero-carousel.is-swiping .hero-slide { transition: none !important; }
+  .hero-carousel.is-swipe-settling .hero-slide { transition: transform 320ms cubic-bezier(.16, 1, .3, 1), opacity 140ms ease, visibility 0s linear 320ms; }
 }
 
 @media (max-width: 767px) {
