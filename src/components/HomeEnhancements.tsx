@@ -86,6 +86,46 @@ export function HomeEnhancements({ children }: { children: ReactNode }) {
       if (progress) progress.onfinish = () => show((active + 1) % slides.length);
       syncPlayback();
     };
+    let touchStart: { x: number; y: number } | null = null;
+    const startSwipe = (event: TouchEvent) => {
+      if (event.touches.length !== 1) {
+        touchStart = null;
+        return;
+      }
+      if (
+        event.target instanceof Element &&
+        event.target.closest("a, button")
+      ) {
+        touchStart = null;
+        return;
+      }
+      const touch = event.touches[0];
+      touchStart = { x: touch.clientX, y: touch.clientY };
+    };
+    const endSwipe = (event: TouchEvent) => {
+      const start = touchStart;
+      touchStart = null;
+      const touch = event.changedTouches[0];
+      if (!start || !touch || slides.length < 2) return;
+
+      const deltaX = touch.clientX - start.x;
+      const deltaY = touch.clientY - start.y;
+      const threshold = Math.max(
+        44,
+        Math.min(72, (hero?.clientWidth ?? 320) * 0.12),
+      );
+      if (
+        Math.abs(deltaX) < threshold ||
+        Math.abs(deltaX) < Math.abs(deltaY) * 1.25
+      ) {
+        return;
+      }
+
+      show((active + (deltaX < 0 ? 1 : -1) + slides.length) % slides.length);
+    };
+    const cancelSwipe = () => {
+      touchStart = null;
+    };
     const clickButtons = buttons.map((button, index) => {
       const fn = () => show(index);
       button.addEventListener("click", fn);
@@ -116,6 +156,9 @@ export function HomeEnhancements({ children }: { children: ReactNode }) {
     hero?.addEventListener("pointerleave", resume);
     hero?.addEventListener("focusin", focusIn);
     hero?.addEventListener("focusout", focusOut);
+    hero?.addEventListener("touchstart", startSwipe, { passive: true });
+    hero?.addEventListener("touchend", endSwipe, { passive: true });
+    hero?.addEventListener("touchcancel", cancelSwipe, { passive: true });
     document.addEventListener("visibilitychange", syncPlayback);
     reduced.addEventListener("change", syncPlayback);
     show(0);
@@ -129,6 +172,9 @@ export function HomeEnhancements({ children }: { children: ReactNode }) {
       hero?.removeEventListener("pointerleave", resume);
       hero?.removeEventListener("focusin", focusIn);
       hero?.removeEventListener("focusout", focusOut);
+      hero?.removeEventListener("touchstart", startSwipe);
+      hero?.removeEventListener("touchend", endSwipe);
+      hero?.removeEventListener("touchcancel", cancelSwipe);
       document.removeEventListener("visibilitychange", syncPlayback);
       reduced.removeEventListener("change", syncPlayback);
     };

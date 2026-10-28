@@ -137,7 +137,7 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
           id="featured-track"
           ref={trackRef}
           tabIndex={0}
-          aria-label="Aros y collares. Usa las flechas del teclado o los botones para recorrerlos"
+          aria-label="Aros y collares. Desliza en móvil o usa las flechas del teclado y los botones para recorrerlos"
         >
           {products.map((product, index) => {
             const photo = product.images[0];

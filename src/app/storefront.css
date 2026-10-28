@@ -1380,3 +1380,13 @@ body:has(.home-frame) .site-header.navbar {
   .favorite-toggle.is-pulsing .ui-icon { animation: none; }
   .favorite-notice { animation: none; }
 }
+
+/* En pantallas táctiles, el gesto horizontal recorre los carruseles. */
+@media (max-width: 767px), (pointer: coarse) {
+  .featured-carousel-controls { display: none; }
+  .hero-carousel { touch-action: pan-y; }
+}
+
+@media (max-width: 767px) {
+  .benefit-story--pvd { grid-template-columns: minmax(0, 1fr); }
+}
