@@ -10,7 +10,7 @@ import {
   type TouchEvent as ReactTouchEvent,
   type UIEvent,
 } from "react";
-import type { Product } from "@/commerce/models";
+import type { CartLine, Product } from "@/commerce/models";
 import { formatMoney } from "@/commerce/catalog";
 import { useCart } from "./CartProvider";
 import { Modal } from "./Modal";
@@ -38,6 +38,71 @@ function materialIconFor(value: string): MaterialIconName {
   if (/\b(acero|inoxidable|stainless)\b/.test(normalized)) return "steel";
   return "material";
 }
+function ProductPurchaseLabel({
+  busy,
+  available,
+}: {
+  busy: boolean;
+  available: boolean;
+}) {
+  if (busy) return <>Agregando…</>;
+  if (!available) return <>Agotado</>;
+
+  return (
+    <span className="product-cta-content">
+      <Icon name="cart" />
+      <span>Añadir a la Bolsa</span>
+    </span>
+  );
+}
+function ProductInBagControl({
+  line,
+  busy,
+  onQuantityChange,
+  className = "",
+}: {
+  line: CartLine;
+  busy: boolean;
+  onQuantityChange: (quantity: number) => void;
+  className?: string;
+}) {
+  const maxQuantity = Math.min(line.variant.stock ?? 99, 99);
+
+  return (
+    <div
+      className={`product-in-bag-control ${className}`.trim()}
+      role="group"
+      aria-label={`Cantidad de ${line.product.name} en la bolsa`}
+      aria-busy={busy}
+    >
+      <span className="product-in-bag-label" role="status">
+        <Icon name="cart" />
+        <span>En la bolsa</span>
+      </span>
+      <div className="product-in-bag-stepper">
+        <button
+          type="button"
+          aria-label={`Quitar una unidad de ${line.product.name}`}
+          disabled={busy}
+          onClick={() => onQuantityChange(line.quantity - 1)}
+        >
+          −
+        </button>
+        <output aria-label={`Cantidad en la bolsa: ${line.quantity}`} aria-live="polite">
+          {line.quantity}
+        </output>
+        <button
+          type="button"
+          aria-label={`Agregar una unidad de ${line.product.name}`}
+          disabled={busy || line.quantity >= maxQuantity}
+          onClick={() => onQuantityChange(line.quantity + 1)}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
 export function ProductDetail({ product }: { product: Product }) {
   const categoryLabel = product.category
     ? product.category.toLocaleUpperCase("es")
@@ -45,12 +110,11 @@ export function ProductDetail({ product }: { product: Product }) {
   const [selected, setSelected] = useState(
     product.variants.find((v) => v.available)?.id ?? product.variants[0].id,
   );
-  const [added, setAdded] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const galleryViewportRef = useRef<HTMLDivElement>(null);
-  const addToCartButtonRef = useRef<HTMLButtonElement>(null);
-  const mobileProductCtaButtonRef = useRef<HTMLButtonElement>(null);
+  const addToCartButtonRef = useRef<HTMLDivElement>(null);
+  const mobileProductCtaButtonRef = useRef<HTMLElement>(null);
   const lastScrollYRef = useRef<number | null>(null);
   const scrollDirectionRef = useRef<"down" | "up" | null>(null);
   const viewerTouchStart = useRef<{
@@ -72,8 +136,9 @@ export function ProductDetail({ product }: { product: Product }) {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [showMobileFloatingCta, setShowMobileFloatingCta] = useState(true);
-  const { busy, error, mutate, openCart } = useCart();
+  const { cart, busy, error, mutate } = useCart();
   const variant = product.variants.find((v) => v.id === selected)!;
+  const cartLine = cart?.lines.find((line) => line.variant.id === variant.id);
   const variantOptionNames = [
     ...new Set(product.variants.flatMap((item) => Object.keys(item.options))),
   ];
@@ -326,16 +391,19 @@ export function ProductDetail({ product }: { product: Product }) {
       moveViewer(1);
     }
   }
-  async function add(opener: HTMLElement) {
-    const ok = await mutate({
+  async function add() {
+    await mutate({
       type: "add",
       variantId: variant.id,
       quantity: 1,
     });
-    if (ok) {
-      setAdded(true);
-      openCart(opener);
-    }
+  }
+  function changeQuantity(line: CartLine, quantity: number) {
+    void mutate(
+      quantity <= 0
+        ? { type: "remove", lineId: line.id }
+        : { type: "update", lineId: line.id, quantity },
+    );
   }
   return (
     <section className="detail">
@@ -412,6 +480,15 @@ export function ProductDetail({ product }: { product: Product }) {
           )}
         </div>
         <div className="detail-content">
+          <p
+            className={`availability ${variant.available ? "is-available" : "is-unavailable"}`}
+            role="status"
+          >
+            <span className="availability-dot" aria-hidden="true" />
+            {variant.available
+              ? "Disponible" + (product.demo ? " en demostración" : "")
+              : "Sin disponibilidad"}
+          </p>
           <div className="detail-product-heading">
             <div className="detail-product-heading-copy">
               {variant.sku && <p className="detail-sku">{variant.sku}</p>}
@@ -467,7 +544,6 @@ export function ProductDetail({ product }: { product: Product }) {
                     aria-pressed={selected === item.id}
                     onClick={() => {
                       setSelected(item.id);
-                      setAdded(false);
                     }}
                   >
                     {values.length > 0 ? values.join(" / ") : item.name}
@@ -477,35 +553,30 @@ export function ProductDetail({ product }: { product: Product }) {
               })}
             </fieldset>
           )}
-          <p
-            className={`availability ${variant.available ? "is-available" : "is-unavailable"}`}
-            role="status"
-          >
-            <span className="availability-dot" aria-hidden="true" />
-            {variant.available
-              ? "Disponible" + (product.demo ? " en demostración" : "")
-              : "Sin disponibilidad"}
-          </p>
-          <button
-            ref={addToCartButtonRef}
-            className={`button btn full product-detail-inline-cta${showStickyBar ? " is-covered-by-sticky" : ""}${showMobileFloatingCta ? " is-covered-by-mobile-floating" : ""}`}
-            aria-hidden={showStickyBar || showMobileFloatingCta}
-            tabIndex={showStickyBar || showMobileFloatingCta ? -1 : undefined}
-            onClick={(event) => void add(event.currentTarget)}
-            disabled={busy || !variant.available}
-          >
-            {busy
-              ? "Agregando…"
-              : !variant.available
-                ? "Agotado"
-                : "Añadir al carrito"}
-          </button>
           <DeliveryEstimator />
-          {added && (
-            <p role="status" className="demo-note">
-              Pieza añadida a tu carrito.
-            </p>
-          )}
+          <div
+            ref={addToCartButtonRef}
+            className={`product-detail-purchase-anchor${showStickyBar || showMobileFloatingCta ? " is-covered" : ""}`}
+            aria-hidden={showStickyBar || showMobileFloatingCta}
+          >
+            {cartLine ? (
+              <ProductInBagControl
+                line={cartLine}
+                busy={busy}
+                onQuantityChange={(quantity) => changeQuantity(cartLine, quantity)}
+              />
+            ) : (
+              <button
+                className="button btn full product-detail-inline-cta"
+                type="button"
+                tabIndex={showStickyBar || showMobileFloatingCta ? -1 : undefined}
+                onClick={() => void add()}
+                disabled={busy || !variant.available}
+              >
+                <ProductPurchaseLabel busy={busy} available={variant.available} />
+              </button>
+            )}
+          </div>
           {error && (
             <p className="feedback" role="alert">
               {error}
@@ -568,39 +639,49 @@ export function ProductDetail({ product }: { product: Product }) {
               <p className="sticky-product-bar__title">{product.name}</p>
               <p className="sticky-product-bar__price">{formatMoney(variant.price)}</p>
             </div>
-            <button
-              className="sticky-product-bar__cta button btn"
-              type="button"
-              onClick={(event) => void add(event.currentTarget)}
-              disabled={busy || !variant.available}
-            >
-              {busy
-                ? "Agregando…"
-                : !variant.available
-                  ? "Agotado"
-                  : "Añadir al carrito"}
-            </button>
+            {cartLine ? (
+              <ProductInBagControl
+                line={cartLine}
+                busy={busy}
+                className="product-in-bag-control--sticky"
+                onQuantityChange={(quantity) => changeQuantity(cartLine, quantity)}
+              />
+            ) : (
+              <button
+                className="sticky-product-bar__cta button btn"
+                type="button"
+                onClick={() => void add()}
+                disabled={busy || !variant.available}
+              >
+                <ProductPurchaseLabel busy={busy} available={variant.available} />
+              </button>
+            )}
           </div>
         </aside>
       )}
       <aside
+        ref={mobileProductCtaButtonRef}
         className={`mobile-product-cta${showMobileFloatingCta && !showStickyBar ? " is-visible" : ""}`}
         aria-hidden={!showMobileFloatingCta || showStickyBar}
         aria-label={`Compra rápida: ${product.name}`}
       >
-        <button
-          ref={mobileProductCtaButtonRef}
-          className="button btn full mobile-product-cta__button"
-          type="button"
-          onClick={(event) => void add(event.currentTarget)}
-          disabled={busy || !variant.available}
-        >
-          {busy
-            ? "Agregando…"
-            : !variant.available
-              ? "Agotado"
-              : "Añadir al carrito"}
-        </button>
+        {cartLine ? (
+          <ProductInBagControl
+            line={cartLine}
+            busy={busy}
+            className="product-in-bag-control--floating"
+            onQuantityChange={(quantity) => changeQuantity(cartLine, quantity)}
+          />
+        ) : (
+          <button
+            className="button btn full mobile-product-cta__button"
+            type="button"
+            onClick={() => void add()}
+            disabled={busy || !variant.available}
+          >
+            <ProductPurchaseLabel busy={busy} available={variant.available} />
+          </button>
+        )}
       </aside>
       <Modal
         open={viewerIndex !== null}

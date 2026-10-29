@@ -11,6 +11,8 @@ import { CourierLogo } from "./CourierLogo";
 import { Icon } from "./Icon";
 
 const FALLBACK_MESSAGE = "Escribe tu comuna para estimar cuándo llega tu pedido";
+const DEFAULT_COMMUNE_ID = "CL13101";
+const DEFAULT_COMMUNE_PROMPT = "Ingresa tu comuna para ver el plazo de entrega";
 const subscribeToLocation = (callback: () => void) => {
   window.addEventListener("popstate", callback);
   return () => window.removeEventListener("popstate", callback);
@@ -18,6 +20,7 @@ const subscribeToLocation = (callback: () => void) => {
 const getOptionsPreviewSnapshot = () =>
   new URLSearchParams(window.location.search).get("envios") === "opciones";
 const getOptionsPreviewServerSnapshot = () => false;
+const POPULAR_COMMUNE_NAMES = ["Santiago", "Providencia", "Las Condes", "Ñuñoa", "Viña del Mar", "Valparaíso"];
 type PickerPosition = { top: number; left: number; width: number; maxHeight: number };
 const UNAVAILABLE_MESSAGES: Record<string, string> = {
   configuration:
@@ -62,15 +65,24 @@ export function DeliveryEstimator() {
   const [locationMessage, setLocationMessage] = useState("");
   const [locating, setLocating] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [mobilePickerOpen, setMobilePickerOpen] = useState(false);
+  const [mobileInitialCommuneId, setMobileInitialCommuneId] = useState<string | null>(null);
   const [pickerPosition, setPickerPosition] = useState<PickerPosition | null>(null);
   const [refresh, setRefresh] = useState(0);
   const pickerRef = useRef<HTMLDivElement>(null);
   const pickerPanelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobilePickerDialogRef = useRef<HTMLDialogElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSelectionCommittedRef = useRef(false);
   const autoRetryCommuneRef = useRef<string | null>(null);
 
   const suggestions = useMemo(() => {
     const needle = normalizeSearch(query);
+    if (!needle.length) {
+      return CHILE_COMMUNES.filter((commune) => POPULAR_COMMUNE_NAMES.includes(commune.name))
+        .sort((a, b) => POPULAR_COMMUNE_NAMES.indexOf(a.name) - POPULAR_COMMUNE_NAMES.indexOf(b.name));
+    }
     if (needle.length < 2) return [];
     return CHILE_COMMUNES.filter((commune) => normalizeSearch(commune.name).includes(needle))
       .sort((a, b) => {
@@ -81,22 +93,23 @@ export function DeliveryEstimator() {
       .slice(0, 5);
   }, [query]);
 
+  const mobileSuggestions = suggestions;
+
   const suggestionsOpen = pickerOpen && suggestions.length > 0;
   const helpMessage = locationMessage || (query.trim().length < 2
-    ? "Escribe al menos dos letras para ver sugerencias"
+    ? suggestions.length
+      ? ""
+      : "Escribe al menos dos letras para ver sugerencias"
     : suggestions.length
       ? ""
       : "No encontramos coincidencias. Revisa el nombre e inténtalo de nuevo.");
-
-  useEffect(() => {
-    if (pickerOpen) {
-      searchInputRef.current?.focus();
-      searchInputRef.current?.select();
-    }
-  }, [pickerOpen]);
+  const mobileHelpMessage = locationMessage || (query.trim().length >= 2 && !suggestions.length
+    ? "No encontramos coincidencias. Revisa el nombre e inténtalo de nuevo."
+    : "");
 
   useEffect(() => {
     function closeOnOutsidePointer(event: PointerEvent) {
+      if (mobilePickerOpen) return;
       if (event.target instanceof Node && !pickerRef.current?.contains(event.target)) {
         setPickerOpen(false);
         setPickerPosition(null);
@@ -105,7 +118,7 @@ export function DeliveryEstimator() {
     }
     document.addEventListener("pointerdown", closeOnOutsidePointer);
     return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, []);
+  }, [mobilePickerOpen]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -122,7 +135,7 @@ export function DeliveryEstimator() {
         const gap = 8;
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        const width = Math.min(fieldRect.width, viewportWidth - edge * 2);
+        const width = Math.min(Math.max(fieldRect.width, 280), viewportWidth - edge * 2);
         const left = Math.max(edge, Math.min(fieldRect.left, viewportWidth - width - edge));
         const availableAbove = Math.max(0, fieldRect.top - edge - gap);
         const availableBelow = Math.max(0, viewportHeight - fieldRect.bottom - edge - gap);
@@ -147,6 +160,34 @@ export function DeliveryEstimator() {
       window.removeEventListener("scroll", updatePlacement, true);
     };
   }, [pickerOpen, query, suggestions.length, helpMessage]);
+
+  useEffect(() => {
+    if (!mobilePickerOpen) return;
+    const dialog = mobilePickerDialogRef.current;
+    const viewport = window.visualViewport;
+    if (!dialog) return;
+
+    const updateVisibleViewport = () => {
+      dialog.style.setProperty(
+        "--delivery-picker-viewport-height",
+        `${viewport?.height ?? window.innerHeight}px`,
+      );
+      dialog.style.setProperty(
+        "--delivery-picker-viewport-top",
+        `${viewport?.offsetTop ?? 0}px`,
+      );
+    };
+
+    updateVisibleViewport();
+    viewport?.addEventListener("resize", updateVisibleViewport);
+    viewport?.addEventListener("scroll", updateVisibleViewport);
+    window.addEventListener("resize", updateVisibleViewport);
+    return () => {
+      viewport?.removeEventListener("resize", updateVisibleViewport);
+      viewport?.removeEventListener("scroll", updateVisibleViewport);
+      window.removeEventListener("resize", updateVisibleViewport);
+    };
+  }, [mobilePickerOpen]);
 
   useEffect(() => {
     if (!communeId) return;
@@ -243,12 +284,64 @@ export function DeliveryEstimator() {
   }, [estimate, communeId]);
 
   const selectedCommune = CHILE_COMMUNES.find((commune) => commune.id === communeId);
+  const showDefaultCommunePrompt =
+    communeId === DEFAULT_COMMUNE_ID && !loading && !estimate;
+  const communeWidthText = pickerOpen && query
+    ? query
+    : showDefaultCommunePrompt
+      ? DEFAULT_COMMUNE_PROMPT
+      : selectedCommune?.name ?? query;
   const message = estimate
     ? deliveryMessage(estimate)
-    : unavailableReason && communeId
-      ? UNAVAILABLE_MESSAGES[unavailableReason] ??
-        "No pudimos completar la consulta. Revisa la configuración del estimador."
-      : FALLBACK_MESSAGE;
+    : showDefaultCommunePrompt
+      ? ""
+      : unavailableReason && communeId
+        ? UNAVAILABLE_MESSAGES[unavailableReason] ??
+          "No pudimos completar la consulta. Revisa la configuración del estimador."
+        : FALLBACK_MESSAGE;
+
+  function updateQuery(value: string) {
+    setQuery(value);
+    setLocationMessage("");
+    setActiveIndex(-1);
+  }
+
+  function openDesktopPicker() {
+    setQuery("");
+    setActiveIndex(-1);
+    setLocationMessage("");
+    setPickerOpen(true);
+  }
+
+  function openMobilePicker() {
+    setMobileInitialCommuneId(communeId || null);
+    mobileSelectionCommittedRef.current = false;
+    setQuery("");
+    setActiveIndex(-1);
+    setLocationMessage("");
+    setMobilePickerOpen(true);
+    const dialog = mobilePickerDialogRef.current;
+    if (dialog && !dialog.open) dialog.showModal();
+    mobileSearchInputRef.current?.focus();
+  }
+
+  function handleMobilePickerClose() {
+    setMobilePickerOpen(false);
+    if (!mobileSelectionCommittedRef.current) {
+      const previousCommune = CHILE_COMMUNES.find(
+        (commune) => commune.id === mobileInitialCommuneId,
+      );
+      setQuery(previousCommune?.name ?? "");
+    }
+    mobileSelectionCommittedRef.current = false;
+    setMobileInitialCommuneId(null);
+  }
+
+  function closeMobilePicker() {
+    const dialog = mobilePickerDialogRef.current;
+    if (dialog?.open) dialog.close();
+    else handleMobilePickerClose();
+  }
 
   function chooseCommune(id: string) {
     const commune = CHILE_COMMUNES.find((item) => item.id === id);
@@ -265,6 +358,10 @@ export function DeliveryEstimator() {
     setRefresh((value) => value + 1);
     setPickerOpen(false);
     setPickerPosition(null);
+    if (mobilePickerDialogRef.current?.open) {
+      mobileSelectionCommittedRef.current = true;
+      mobilePickerDialogRef.current.close();
+    }
   }
 
   function useLocation() {
@@ -302,50 +399,52 @@ export function DeliveryEstimator() {
       className={`delivery-estimator${showAllOptions ? " is-options-preview" : ""}`}
       aria-label="Estimación de entrega"
     >
-      <p
-        id="delivery-estimator-result"
-        className={[
-          "delivery-estimator-result",
-          loading && "is-loading",
-          !loading && !estimate && unavailableReason === "no_service" && "is-no-service",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        role="status"
-        aria-live="polite"
-        aria-busy={loading}
-      >
-        <Icon name="truck" />
-        <span className="delivery-estimator-message">{loading ? "Consultando plazo…" : message}</span>
-        {estimate && <CourierLogo courier={estimate.courier} />}
-      </p>
-      <div className="delivery-estimator-destination" ref={pickerRef}>
-        <label className="delivery-estimator-label" htmlFor="delivery-estimator-commune">Comuna de entrega</label>
-        <div className="delivery-estimator-field">
+      <div className={`delivery-estimator-line${showDefaultCommunePrompt ? " is-commune-prompt" : ""}`}>
+        {!showDefaultCommunePrompt && (
+          <p
+            id="delivery-estimator-result"
+            className={[
+              "delivery-estimator-result",
+              loading && "is-loading",
+              !loading && !estimate && "is-unavailable",
+              !loading && !estimate && unavailableReason === "no_service" && "is-no-service",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            role="status"
+            aria-live="polite"
+            aria-busy={loading}
+          >
+            <Icon name="truck" />
+            <span className="delivery-estimator-message">
+              {loading ? "Consultando plazo…" : message}{estimate ? " a" : ""}
+            </span>
+          </p>
+        )}
+        <div className={`delivery-estimator-destination${showDefaultCommunePrompt ? " is-commune-prompt" : ""}`} ref={pickerRef}>
+        <label className="delivery-estimator-label sr-only" htmlFor="delivery-estimator-commune">Comuna de entrega</label>
+        <div className={`delivery-estimator-field delivery-estimator-field--desktop${showDefaultCommunePrompt ? " is-prompt" : ""}`}>
           <input
             ref={searchInputRef}
             id="delivery-estimator-commune"
             type="text"
+            size={Math.max(8, Math.min(showDefaultCommunePrompt ? 42 : 22, communeWidthText.length))}
             role="combobox"
-            value={pickerOpen ? query : selectedCommune?.name ?? query}
+            value={pickerOpen ? query : showDefaultCommunePrompt ? DEFAULT_COMMUNE_PROMPT : selectedCommune?.name ?? query}
             placeholder="Elige una comuna"
-            readOnly={!pickerOpen}
             autoComplete="off"
             aria-autocomplete="list"
             aria-expanded={pickerOpen}
             aria-controls={pickerOpen ? "delivery-estimator-picker-panel" : undefined}
             aria-activedescendant={activeIndex >= 0 ? `delivery-commune-option-${suggestions[activeIndex]?.id}` : undefined}
             aria-describedby={helpMessage ? "delivery-estimator-help" : undefined}
-            onFocus={() => setPickerOpen(true)}
-            onChange={(event) => {
-              setQuery(event.currentTarget.value);
-              setCommuneId("");
-              setEstimate(null);
-              setUnavailableReason(null);
-              setLocationMessage("");
-              setLoading(false);
-              setActiveIndex(-1);
+            onFocus={() => {
+              if (!pickerOpen) openDesktopPicker();
             }}
+            onClick={() => {
+              if (!pickerOpen) openDesktopPicker();
+            }}
+            onChange={(event) => updateQuery(event.currentTarget.value)}
             onKeyDown={(event) => {
               if (event.key === "ArrowDown" && suggestions.length) {
                 event.preventDefault();
@@ -377,13 +476,26 @@ export function DeliveryEstimator() {
                 setPickerPosition(null);
                 setActiveIndex(-1);
               } else {
-                setPickerOpen(true);
+                openDesktopPicker();
               }
             }}
           >
             <span className={`delivery-estimator-chevron${pickerOpen ? " is-open" : ""}`} aria-hidden="true" />
           </button>
         </div>
+        <button
+          className={`delivery-estimator-field delivery-estimator-mobile-trigger${showDefaultCommunePrompt ? " is-prompt" : ""}`}
+          type="button"
+          aria-label={showDefaultCommunePrompt
+            ? DEFAULT_COMMUNE_PROMPT
+            : `Cambiar comuna de entrega${selectedCommune ? `, actualmente ${selectedCommune.name}` : ""}`}
+          aria-haspopup="dialog"
+          aria-expanded={mobilePickerOpen}
+          onClick={openMobilePicker}
+        >
+          <span>{showDefaultCommunePrompt ? DEFAULT_COMMUNE_PROMPT : selectedCommune?.name ?? "Elige una comuna"}</span>
+          <span className="delivery-estimator-chevron" aria-hidden="true" />
+        </button>
         {pickerOpen && (
           <div
             ref={pickerPanelRef}
@@ -432,6 +544,86 @@ export function DeliveryEstimator() {
         )}
         {locationMessage && !pickerOpen && (
           <p className="delivery-estimator-location-feedback" role="status">{locationMessage}</p>
+        )}
+        <dialog
+          ref={mobilePickerDialogRef}
+          className="delivery-estimator-mobile-dialog"
+          aria-labelledby="delivery-estimator-mobile-title"
+          onClose={handleMobilePickerClose}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeMobilePicker();
+          }}
+        >
+          <div className="delivery-estimator-mobile-dialog__header">
+            <div>
+              <p>COMUNA DE ENTREGA</p>
+              <h2 id="delivery-estimator-mobile-title">¿A dónde lo enviamos?</h2>
+            </div>
+            <button
+              className="delivery-estimator-mobile-dialog__close"
+              type="button"
+              aria-label="Cerrar selector de comuna"
+              onClick={closeMobilePicker}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+          <div className="delivery-estimator-mobile-dialog__search">
+            <Icon name="search" />
+            <input
+              ref={mobileSearchInputRef}
+              id="delivery-estimator-mobile-search"
+              type="search"
+              value={query}
+              placeholder="Escribe tu comuna"
+              autoComplete="off"
+              aria-label="Buscar comuna"
+              aria-controls="delivery-estimator-mobile-options"
+              onChange={(event) => updateQuery(event.currentTarget.value)}
+            />
+          </div>
+          <button
+            className="delivery-estimator-locate delivery-estimator-mobile-dialog__locate"
+            type="button"
+            onClick={useLocation}
+            disabled={locating}
+          >
+            <Icon name="location" />
+            {locating ? "Buscando ubicación…" : "Usar mi ubicación"}
+          </button>
+          <p className="delivery-estimator-mobile-dialog__status" aria-live="polite">
+            {mobileHelpMessage || (query.trim().length < 2
+              ? query.trim().length === 1
+                ? "Escribe una letra más para ver opciones"
+                : "Comunas frecuentes"
+              : "Resultados")}
+          </p>
+          {mobileSuggestions.length > 0 ? (
+            <ul className="delivery-estimator-mobile-options" id="delivery-estimator-mobile-options">
+              {mobileSuggestions.map((commune) => (
+                <li key={commune.id}>
+                  <button
+                    className="delivery-estimator-mobile-option"
+                    type="button"
+                    aria-pressed={commune.id === (mobilePickerOpen ? mobileInitialCommuneId : communeId)}
+                    onClick={() => chooseCommune(commune.id)}
+                  >
+                    <span>{commune.name}</span>
+                    <span>{commune.region}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : query.trim().length >= 2 && !mobileHelpMessage ? (
+            <p className="delivery-estimator-mobile-dialog__empty">No encontramos comunas con ese nombre.</p>
+          ) : null}
+        </dialog>
+        </div>
+        {estimate && (
+          <span className="delivery-estimator-courier">
+            <span>por</span>
+            <CourierLogo courier={estimate.courier} />
+          </span>
         )}
       </div>
       {showAllOptions && !loading && (

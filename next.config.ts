@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
   images: {
+    qualities: [75, 90],
     remotePatterns: [{ protocol: "https", hostname: "cdn.shopify.com" }],
   },
   async headers() {

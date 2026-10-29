@@ -20,7 +20,8 @@ export async function Home() {
         >
           <picture className="hero-picture">
             <Image
-              sizes="100vw"
+              sizes="(max-width: 767px) 260vw, 100vw"
+              quality={90}
               className="hero-img"
               src="/assets/hero-desktop-blur.webp"
               alt="Modelo de eulán junto al mar, propuesta de imagen con fondo desenfocado"
@@ -90,10 +91,12 @@ export async function Home() {
           <picture className="hero-product-picture">
             <source
               media="(max-width: 767px)"
-              srcSet="/assets/hero-aros-mobile.webp"
+              type="image/avif"
+              srcSet="/assets/hero-aros-mobile-hq.avif"
             />
             <Image
               sizes="100vw"
+              quality={90}
               className="hero-product-image"
               src="/assets/hero-aros-v2.webp"
               alt="Aros dorados sobre una superficie cerámica marfil, propuesta conceptual de eulán"
@@ -124,7 +127,8 @@ export async function Home() {
         >
           <picture className="hero-gift-picture">
             <Image
-              sizes="100vw"
+              sizes="(max-width: 767px) 260vw, 100vw"
+              quality={90}
               className="hero-gift-image"
               src="/assets/hero-regalo.jpg"
               alt="Collar dorado sobre tela azul marino con orquídeas y detalles festivos"
