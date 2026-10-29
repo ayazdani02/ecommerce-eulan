@@ -17,7 +17,6 @@ const referencePricing: Record<string, [number, string, string]> = {
 
 export function FeaturedProducts({ products }: { products: Product[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState(1);
   const [canMovePrevious, setCanMovePrevious] = useState(false);
   const [canMoveNext, setCanMoveNext] = useState(products.length > 1);
 
@@ -26,16 +25,6 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
     if (!track) return;
 
     const update = () => {
-      const firstSlide = track.firstElementChild as HTMLElement | null;
-      const width = firstSlide?.getBoundingClientRect().width ?? 1;
-      const gap = Number.parseFloat(getComputedStyle(track).gap) || 0;
-      const step = width + gap;
-      const current = Math.min(
-        products.length,
-        Math.round(track.scrollLeft / step) + 1,
-      );
-
-      setPosition(current);
       setCanMovePrevious(track.scrollLeft > 2);
       setCanMoveNext(track.scrollLeft + track.clientWidth < track.scrollWidth - 2);
     };
@@ -97,11 +86,6 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
     >
       <div className="featured-header">
         <h2>Explora los favoritos de nuestro catálogo</h2>
-        <div className="carousel-navigation">
-          <span id="featured-position" aria-live="polite" aria-atomic="true">
-            {String(position).padStart(2, "0")} / {String(products.length).padStart(2, "0")}
-          </span>
-        </div>
       </div>
       <div className="featured-carousel-shell">
         <div

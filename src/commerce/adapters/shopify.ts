@@ -21,8 +21,10 @@ type RawMoney = { amount: string; currencyCode: string };
 type RawVariant = {
   id: string;
   title: string;
+  sku: string | null;
   availableForSale: boolean;
   price: RawMoney;
+  compareAtPrice: RawMoney | null;
   selectedOptions: { name: string; value: string }[];
 };
 type RawProduct = {
@@ -35,6 +37,7 @@ type RawProduct = {
   variants: Connection<RawVariant>;
   collections: Connection<{ handle: string }>;
   materials?: { value: string } | null;
+  materialAttributes?: { value: string } | null;
   care?: { value: string } | null;
 };
 type RawCollection = {
@@ -56,8 +59,8 @@ type RawCart = {
 };
 const IMAGE = "url altText width height";
 const VARIANT =
-  "id title availableForSale price { amount currencyCode } selectedOptions { name value }";
-const PRODUCT = `id handle title description productType images(first:10){nodes{${IMAGE}}} variants(first:100){nodes{${VARIANT}}} collections(first:20){nodes{handle}} materials:metafield(namespace:"custom",key:"materials"){value} care:metafield(namespace:"custom",key:"care"){value}`;
+  "id title sku availableForSale price { amount currencyCode } compareAtPrice { amount currencyCode } selectedOptions { name value }";
+const PRODUCT = `id handle title description productType images(first:10){nodes{${IMAGE}}} variants(first:100){nodes{${VARIANT}}} collections(first:20){nodes{handle}} materialAttributes:metafield(namespace:"custom",key:"material_attributes"){value} materials:metafield(namespace:"custom",key:"materials"){value} care:metafield(namespace:"custom",key:"care"){value}`;
 const CART = `id checkoutUrl totalQuantity cost{subtotalAmount{amount currencyCode}} lines(first:100){nodes{id quantity merchandise{... on ProductVariant{${VARIANT} product{${PRODUCT}}}}}}`;
 const CONTEXT = "@inContext(country: CL, language: ES)";
 function config() {
@@ -114,11 +117,29 @@ function image(raw: RawImage): ProductImage {
     height: raw.height || 1200,
   };
 }
+function materialList(raw: RawProduct): string[] {
+  const value = raw.materialAttributes?.value;
+  if (value) {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is string => typeof item === "string" && item.trim().length > 0,
+        );
+      }
+    } catch {
+      // Keep the storefront resilient if a list metafield contains malformed JSON.
+    }
+  }
+  return [];
+}
 function variant(raw: RawVariant): Variant {
   return {
     id: raw.id,
     name: raw.title,
+    sku: raw.sku ?? undefined,
     price: money(raw.price),
+    compareAtPrice: raw.compareAtPrice ? money(raw.compareAtPrice) : undefined,
     available: raw.availableForSale,
     options: Object.fromEntries(
       raw.selectedOptions.map((o) => [o.name, o.value]),
@@ -135,9 +156,9 @@ function product(raw: RawProduct): Product {
     images: raw.images.nodes.map(image),
     variants: raw.variants.nodes.map(variant),
     collectionSlugs: raw.collections.nodes.map((c) => c.handle),
-    materials:
-      raw.materials?.value ??
-      "Información de materiales pendiente de confirmar.",
+    materials: materialList(raw),
+    materialsDescription:
+      raw.materials?.value ?? "",
     care:
       raw.care?.value ??
       "Consulta los cuidados específicos de esta pieza antes de comprar.",

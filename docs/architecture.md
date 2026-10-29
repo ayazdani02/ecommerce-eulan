@@ -11,6 +11,7 @@ Next.js 16, App Router, React 19, TypeScript estricto y CSS original. Vercel es 
 - `src/commerce/adapters/mock.ts`: catálogo de seis piezas de referencia, stock de demostración y carrito serializado en cookie HttpOnly. Los importes siempre se recalculan desde catálogo; no se confía en precios del navegador.
 - `src/commerce/adapters/shopify.ts`: cliente Hydrogen React, Storefront GraphQL, normalización, carrito remoto y redirección a checkout.
 - `src/integrations/contracts.ts`: contratos sin implementación para envíos, pagos y marketplace.
+- `src/integrations/envia`: cliente servidor para estimaciones informativas de entrega. No crea envíos ni interviene en el checkout; requiere token y origen configurados.
 
 ## Flujo
 
@@ -22,7 +23,7 @@ Carrito cliente → Route Handler con validación de origen y cuerpo → proveed
 
 ## Límites actuales
 
-Shopify se configura en servidor y falla de forma visible si faltan credenciales. No se ha probado contra una tienda real. Los productos Shopify consultan hasta 100 variantes y diez imágenes por producto; antes de usar catálogos con más variantes debe añadirse paginación de variantes. El listado recorre páginas de 100 productos; para catálogos grandes conviene trasladar filtros y paginación al proveedor. Las colecciones se consultan hasta 100.
+Shopify se configura en servidor y falla de forma visible si faltan credenciales. El catálogo Shopify del adaptador consulta hasta 100 variantes y diez imágenes por producto; el script de medidas de envío tiene paginación independiente completa. El listado de productos consulta 100 por página; las colecciones se consultan hasta 100. El estimador de entrega llama Envia solo tras selección de región y requiere `ENVIA_TOKEN`, origen y preparación/corte documentados en `shipping.md`; sus tarifas no afectan el checkout.
 
 No se implementan sesiones de clientes ni pedidos; el icono de cuenta enlaza al login alojado en Shopify. Los favoritos se guardan localmente en el navegador y no se sincronizan con cuentas ni dispositivos. Tampoco hay webhook de inventario, traducciones múltiples, Blue Express, Mercado Pago ni Mercado Libre. Shopify gestiona precios y disponibilidad finales del checkout. Contacto prepara un correo local y no envía datos a un servidor.
 

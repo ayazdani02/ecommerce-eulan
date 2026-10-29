@@ -82,8 +82,11 @@ export const mockProducts: Product[] = entries.map(
         stock: i === 5 ? 0 : 8,
       }),
     ),
-    materials:
+    materials: [
       "Propuesta: acero inoxidable 316L y acabado PVD en oro 18K. Composición y medidas pendientes de confirmación para el catálogo real.",
+    ],
+    materialsDescription:
+      "Propuesta conceptual: acero inoxidable 316L con acabado PVD en tono dorado. Composición, propiedades y cuidados pendientes de confirmar para el catálogo real.",
     care: "Guía provisional: guardar por separado y limpiar suavemente con un paño seco. Confirmar los cuidados según la composición de cada pieza.",
   }),
 );

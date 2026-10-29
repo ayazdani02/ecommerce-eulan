@@ -22,7 +22,7 @@ Fuentes oficiales verificadas:
    - `NEXT_PUBLIC_SITE_URL` con el dominio real
 4. Crear colecciones con handles `aros` y `collares` para la navegación original. Definir Product type como `aros` o `collares`. Se admiten más categorías en el catálogo, pero la navegación editorial fija conserva las dos del Home.
 5. Usar nombres de opciones legibles en español. El filtro específico de acabado usa la opción `Acabado`; las demás opciones se muestran en los nombres de variantes.
-6. Configurar metafields de texto `custom.materials` y `custom.care` y exponerlos a Storefront. Si faltan, la UI muestra información pendiente, sin inventar composición.
+6. Configurar `custom.material_attributes` como lista de texto de una línea, con acceso Storefront, para guardar cada material/atributo como un valor independiente y poder usarlo como fuente de filtros. La ficha muestra cada valor junto al precio. `custom.materials` es el metafield de texto largo para la sección desplegable de materiales y características; `custom.care` contiene cuidados. En la app Search & Discovery se debe añadir la definición como filtro; el storefront Next.js requiere conectar ese filtro a su propio catálogo para mostrarlo a los clientes.
 7. Usar imágenes en `cdn.shopify.com`. Si se usa otra CDN, autorizar su dominio explícitamente en next.config.ts.
 8. Reiniciar el servidor y probar catálogo, producto, variantes, stock, carrito y checkout en una tienda de desarrollo. El Home consulta los primeros cinco productos del proveedor para sus destacados; no traslada precios/descuentos mock a Shopify.
 

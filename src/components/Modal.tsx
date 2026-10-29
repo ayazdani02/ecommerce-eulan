@@ -5,6 +5,7 @@ import {
   type KeyboardEventHandler,
   type ReactNode,
 } from "react";
+import { Icon } from "./Icon";
 export function Modal({
   open,
   onClose,
@@ -63,7 +64,7 @@ export function Modal({
           onClick={onClose}
           aria-label={`Cerrar ${title.toLowerCase()}`}
         >
-          ×
+          <Icon name="close" />
         </button>
       </div>
       {children}

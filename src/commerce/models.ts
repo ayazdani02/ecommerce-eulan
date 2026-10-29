@@ -8,6 +8,8 @@ export type ProductImage = {
 export type Variant = {
   id: string;
   name: string;
+  sku?: string | null;
+  compareAtPrice?: Money | null;
   options: Record<string, string>;
   price: Money;
   available: boolean;
@@ -21,7 +23,8 @@ export type Product = {
   category: string;
   images: ProductImage[];
   variants: Variant[];
-  materials: string;
+  materials: string[];
+  materialsDescription: string;
   care: string;
   demo: boolean;
   collectionSlugs: string[];

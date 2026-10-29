@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCart } from "./CartProvider";
 import { useFavorites } from "./FavoritesProvider";
 import { Modal } from "./Modal";
@@ -11,9 +11,19 @@ import { primaryNavigation } from "@/navigation";
 export function Header() {
   const [menu, setMenu] = useState(false);
   const pathname = usePathname();
+  const previousPathname = useRef(pathname);
   const { cart, openCart } = useCart();
   const { slugs: favoriteSlugs } = useFavorites();
   const count = cart?.totalQuantity ?? 0;
+
+  useEffect(() => {
+    if (previousPathname.current === pathname) return;
+    previousPathname.current = pathname;
+    if (pathname === "/") {
+      document.getElementById("contenido")?.focus({ preventScroll: true });
+    }
+  }, [pathname]);
+
   return (
     <>
       <header
@@ -58,17 +68,17 @@ export function Header() {
           </Link>
         </div>
         <div className="navbar-end header-actions">
-          <Link className="header-icon-link" href="/favoritos" aria-label={`Ver favoritos, ${favoriteSlugs.length} piezas`}>
-            <Icon name="heart" />
-            {favoriteSlugs.length > 0 && <span className="header-icon-count" aria-hidden="true">{favoriteSlugs.length}</span>}
-          </Link>
           <a className="header-icon-link" href="https://gg0kzc-em.myshopify.com/account/login" aria-label="Ingresar a mi cuenta en Shopify">
             <Icon name="user" />
           </a>
+          <Link className="header-icon-link header-favorites-link" href="/favoritos" aria-label={`Ver favoritos, ${favoriteSlugs.length} piezas`}>
+            <Icon name="heart" />
+            {favoriteSlugs.length > 0 && <span className="header-icon-count" aria-hidden="true">{favoriteSlugs.length}</span>}
+          </Link>
           <button
             className="cart-trigger btn btn-ghost"
             onClick={(event) => openCart(event.currentTarget)}
-            aria-label={`Abrir carrito, ${count} productos`}
+            aria-label={`Abrir bolsa de compras, ${count} productos`}
           >
             <Icon name="cart" />
             <span className="cart-count" aria-hidden="true">
@@ -104,19 +114,6 @@ export function Header() {
         </nav>
         <nav className="mobile-menu-utilities" aria-label="Tu cuenta">
           <ul className="menu menu-vertical">
-            <li>
-              <Link href="/favoritos" onClick={() => setMenu(false)}>
-                <span className="mobile-menu-utility-label">
-                  <Icon name="heart" />
-                  Favoritos
-                </span>
-                {favoriteSlugs.length > 0 && (
-                  <span className="mobile-menu-count" aria-label={`${favoriteSlugs.length} favoritos`}>
-                    {favoriteSlugs.length}
-                  </span>
-                )}
-              </Link>
-            </li>
             <li>
               <a
                 href="https://gg0kzc-em.myshopify.com/account/login"
