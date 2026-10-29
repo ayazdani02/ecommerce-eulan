@@ -2,7 +2,8 @@ import { CHILE_COMMUNES, type ChileCommuneId } from "./chile-communes";
 
 export { CHILE_COMMUNES };
 export type { ChileCommuneId };
-export type CourierId = "starken" | "blueexpress" | "chilexpress";
+export type KnownCourierId = "starken" | "blueexpress" | "chilexpress";
+export type CourierId = string;
 
 export interface DeliveryEstimate {
   courier: CourierId;
@@ -31,12 +32,13 @@ export interface EnviaCapitalLocation {
 export interface EstimateInput {
   rate: RateRecord;
   courier: CourierId;
+  courierName?: string;
   now: Date;
   preparationHours: number;
   cutoffTime: string;
 }
 
-export const COURIER_NAMES: Record<CourierId, string> = {
+export const COURIER_NAMES: Record<KnownCourierId, string> = {
   starken: "Starken",
   blueexpress: "Blue Express",
   chilexpress: "Chilexpress",
@@ -61,7 +63,7 @@ export function parseEstimateDays(value: unknown): { min: number; max: number } 
   return { min, max };
 }
 
-export function identifyCourier(value: unknown): CourierId | null {
+export function identifyCourier(value: unknown): KnownCourierId | null {
   if (typeof value !== "string") return null;
   const normalized = value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   if (normalized.includes("starken")) return "starken";
@@ -70,6 +72,28 @@ export function identifyCourier(value: unknown): CourierId | null {
   }
   if (normalized.includes("chilexpress")) return "chilexpress";
   return null;
+}
+
+export function formatCourierName(value: string) {
+  const normalized = value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+  const knownNames: Record<string, string> = {
+    blueexpress: "Blue Express",
+    bluexpress: "Blue Express",
+    chilexpress: "Chilexpress",
+    correoschile: "CorreosChile",
+    despachalo: "Despáchalo",
+    dhl: "DHL",
+    fazt: "FAZT",
+    fedex: "FedEx",
+    noventa9minutos: "99minutos",
+    starken: "Starken",
+    welivery: "Welivery",
+  };
+  return knownNames[normalized] ?? value
+    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function normalizeLocationName(value: unknown) {
@@ -307,10 +331,11 @@ export function normalizeEstimate(input: EstimateInput) {
   );
 
   if (structured && validIsoDate(structured.date)) {
+    if (structured.date < dateKey(input.now)) return null;
     const arrivalDate = addChileBusinessDays(structured.date, preparationDelay);
     return {
       courier: input.courier,
-      courierName: COURIER_NAMES[input.courier],
+      courierName: input.courierName ?? COURIER_NAMES[input.courier as KnownCourierId] ?? formatCourierName(input.courier),
       service: typeof input.rate.service === "string" ? input.rate.service : "",
       arrivalDate,
       arrivalTime: typeof structured.time === "string" ? structured.time : undefined,
@@ -334,7 +359,7 @@ export function normalizeEstimate(input: EstimateInput) {
     const [year, month, day] = arrivalDate.split("-").map(Number);
     return {
       courier: input.courier,
-      courierName: COURIER_NAMES[input.courier],
+      courierName: input.courierName ?? COURIER_NAMES[input.courier as KnownCourierId] ?? formatCourierName(input.courier),
       service: typeof input.rate.service === "string" ? input.rate.service : "",
       arrivalDate,
       arrivalTime: undefined,

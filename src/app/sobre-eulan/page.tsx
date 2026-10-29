@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { RouteReady } from "@/components/RouteReady";
 export const metadata: Metadata = {
   title: "Universo EULÁN",
   alternates: { canonical: "/sobre-eulan" },
@@ -50,6 +51,7 @@ export default function Page() {
           natural y personal.
         </p>
       </section>
+      <RouteReady />
     </>
   );
 }

@@ -25,7 +25,7 @@ Carrito cliente → Route Handler con validación de origen y cuerpo → proveed
 
 Shopify se configura en servidor y falla de forma visible si faltan credenciales. El catálogo Shopify del adaptador consulta hasta 100 variantes y diez imágenes por producto; el script de medidas de envío tiene paginación independiente completa. El listado de productos consulta 100 por página; las colecciones se consultan hasta 100. El estimador de entrega llama Envia solo tras selección de región y requiere `ENVIA_TOKEN`, origen y preparación/corte documentados en `shipping.md`; sus tarifas no afectan el checkout.
 
-No se implementan sesiones de clientes ni pedidos; el icono de cuenta enlaza al login alojado en Shopify. Los favoritos se guardan localmente en el navegador y no se sincronizan con cuentas ni dispositivos. Tampoco hay webhook de inventario, traducciones múltiples, Blue Express, Mercado Pago ni Mercado Libre. Shopify gestiona precios y disponibilidad finales del checkout. Contacto prepara un correo local y no envía datos a un servidor.
+No se implementan sesiones de clientes ni pedidos; `/cuenta` delega el acceso al login alojado en Shopify a través del CommerceProvider, sin hardcodear el dominio en los componentes. En modo mock muestra que el acceso no está configurado. Los favoritos se guardan localmente en el navegador y no se sincronizan con cuentas ni dispositivos. Tampoco hay webhook de inventario, traducciones múltiples, Blue Express, Mercado Pago ni Mercado Libre. Shopify gestiona precios y disponibilidad finales del checkout. Contacto prepara un correo local y no envía datos a un servidor.
 
 ## Seguridad y operación
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { DeliveryEstimate } from "@/integrations/envia/delivery-estimate";
 import {
   CHILE_COMMUNES,
@@ -13,13 +13,6 @@ import { Icon } from "./Icon";
 const FALLBACK_MESSAGE = "Escribe tu comuna para estimar cuándo llega tu pedido";
 const DEFAULT_COMMUNE_ID = "CL13101";
 const DEFAULT_COMMUNE_PROMPT = "Ingresa tu comuna para ver el plazo de entrega";
-const subscribeToLocation = (callback: () => void) => {
-  window.addEventListener("popstate", callback);
-  return () => window.removeEventListener("popstate", callback);
-};
-const getOptionsPreviewSnapshot = () =>
-  new URLSearchParams(window.location.search).get("envios") === "opciones";
-const getOptionsPreviewServerSnapshot = () => false;
 const POPULAR_COMMUNE_NAMES = ["Santiago", "Providencia", "Las Condes", "Ñuñoa", "Viña del Mar", "Valparaíso"];
 type PickerPosition = { top: number; left: number; width: number; maxHeight: number };
 const UNAVAILABLE_MESSAGES: Record<string, string> = {
@@ -54,12 +47,6 @@ export function DeliveryEstimator() {
   const [communeId, setCommuneId] = useState("CL13101");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [estimate, setEstimate] = useState<DeliveryEstimate | null>(null);
-  const [options, setOptions] = useState<DeliveryEstimate[]>([]);
-  const showAllOptions = useSyncExternalStore(
-    subscribeToLocation,
-    getOptionsPreviewSnapshot,
-    getOptionsPreviewServerSnapshot,
-  );
   const [loading, setLoading] = useState(true);
   const [unavailableReason, setUnavailableReason] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
@@ -198,14 +185,13 @@ export function DeliveryEstimator() {
       if (controller.signal.aborted) return;
       controller.abort();
       setEstimate(null);
-      setOptions([]);
       setUnavailableReason("provider");
       setLoading(false);
     }, 30_000);
     void fetch("/api/shipping-estimate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ communeId, includeAllOptions: showAllOptions }),
+      body: JSON.stringify({ communeId }),
       cache: "no-store",
       signal: controller.signal,
     })
@@ -216,15 +202,11 @@ export function DeliveryEstimator() {
         }
         const result = body as {
           estimate?: unknown;
-          options?: unknown;
           reason?: unknown;
         };
         const value = result.estimate;
         return {
           estimate: isDeliveryEstimate(value) ? value : null,
-          options: Array.isArray(result.options)
-            ? result.options.filter(isDeliveryEstimate)
-            : [],
           reason:
             typeof result.reason === "string"
               ? result.reason
@@ -252,13 +234,11 @@ export function DeliveryEstimator() {
           return;
         }
         setEstimate(result?.estimate ?? null);
-        setOptions(result?.options ?? []);
         setUnavailableReason(result?.reason ?? "provider");
       })
       .catch(() => {
         if (!controller.signal.aborted) {
           setEstimate(null);
-          setOptions([]);
           setUnavailableReason("provider");
         }
       })
@@ -271,7 +251,7 @@ export function DeliveryEstimator() {
       window.clearTimeout(timeout);
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
     };
-  }, [communeId, refresh, showAllOptions]);
+  }, [communeId, refresh]);
 
   useEffect(() => {
     if (!estimate || !communeId) return;
@@ -350,7 +330,6 @@ export function DeliveryEstimator() {
     setCommuneId(commune.id);
     setActiveIndex(-1);
     setEstimate(null);
-    setOptions([]);
     setUnavailableReason(null);
     autoRetryCommuneRef.current = null;
     setLocationMessage("");
@@ -396,7 +375,7 @@ export function DeliveryEstimator() {
 
   return (
     <section
-      className={`delivery-estimator${showAllOptions ? " is-options-preview" : ""}`}
+      className="delivery-estimator"
       aria-label="Estimación de entrega"
     >
       <div className={`delivery-estimator-line${showDefaultCommunePrompt ? " is-commune-prompt" : ""}`}>
@@ -622,35 +601,10 @@ export function DeliveryEstimator() {
         {estimate && (
           <span className="delivery-estimator-courier">
             <span>por</span>
-            <CourierLogo courier={estimate.courier} />
+            <CourierLogo courier={estimate.courier} name={estimate.courierName} />
           </span>
         )}
       </div>
-      {showAllOptions && !loading && (
-        <div className="delivery-options-preview" aria-live="polite">
-          <p className="delivery-options-heading">
-            {options.length
-              ? `Plazos disponibles en Envia · ${selectedCommune?.name ?? ""}`
-              : "Envia no devolvió plazos para esta comuna"}
-          </p>
-          {options.length > 0 && (
-            <ul className="delivery-options-list">
-              {options.map((option, index) => (
-                <li key={`${option.courier}-${option.service}-${option.arrivalDate}-${index}`}>
-                  <CourierLogo courier={option.courier} />
-                  <span className="delivery-option-service">
-                    {option.service || option.courierName}
-                  </span>
-                  <strong>{deliveryMessage(option)}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="delivery-options-note">
-            Prueba local · fechas estimadas, sin mostrar tarifas.
-          </p>
-        </div>
-      )}
     </section>
   );
 }

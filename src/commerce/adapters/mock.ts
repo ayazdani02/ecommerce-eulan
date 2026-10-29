@@ -171,6 +171,9 @@ function cartFrom(lines: StoredLine[]): Cart {
 }
 export const mockProvider: CommerceProvider = {
   name: "mock",
+  getAccountLoginUrl() {
+    return null;
+  },
   async getProducts(query) {
     return filterProducts(mockProducts, query);
   },

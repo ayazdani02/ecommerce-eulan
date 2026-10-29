@@ -15,7 +15,17 @@ const referencePricing: Record<string, [number, string, string]> = {
   "collar-gota": [42990, "−24%", "collar-medalla"],
 };
 
-export function FeaturedProducts({ products }: { products: Product[] }) {
+export function FeaturedProducts({
+  products,
+  title = "Explora los favoritos de nuestro catálogo",
+  ariaLabel = "Productos destacados",
+  trackId = "featured-track",
+}: {
+  products: Product[];
+  title?: string;
+  ariaLabel?: string;
+  trackId?: string;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [canMovePrevious, setCanMovePrevious] = useState(false);
   const [canMoveNext, setCanMoveNext] = useState(products.length > 1);
@@ -80,12 +90,12 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
 
   return (
     <section
-      className="featured-products"
-      aria-label="Productos destacados"
+      className={`featured-products${trackId === "featured-track" ? "" : " featured-products--related"}`}
+      aria-label={ariaLabel}
       aria-roledescription="carrusel"
     >
       <div className="featured-header">
-        <h2>Explora los favoritos de nuestro catálogo</h2>
+        <h2>{title}</h2>
       </div>
       <div className="featured-carousel-shell">
         <div
@@ -99,7 +109,7 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
               type="button"
               onClick={() => move(-1)}
               aria-label="Ver productos anteriores"
-              aria-controls="featured-track"
+              aria-controls={trackId}
             >
               <Icon name="arrow-left" />
             </button>
@@ -110,7 +120,7 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
               type="button"
               onClick={() => move(1)}
               aria-label="Ver productos siguientes"
-              aria-controls="featured-track"
+              aria-controls={trackId}
             >
               <Icon name="arrow-right" />
             </button>
@@ -118,10 +128,10 @@ export function FeaturedProducts({ products }: { products: Product[] }) {
         </div>
         <div
           className="featured-track carousel carousel-horizontal"
-          id="featured-track"
+          id={trackId}
           ref={trackRef}
           tabIndex={0}
-          aria-label="Aros y collares. Desliza en móvil o usa las flechas del teclado y los botones para recorrerlos"
+          aria-label={`${title}. Desliza en móvil o usa las flechas del teclado y los botones para recorrerlos`}
         >
           {products.map((product, index) => {
             const photo = product.images[0];

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { infoPages } from "@/content";
 import { ContactForm } from "@/components/ContactForm";
+import { RouteReady } from "@/components/RouteReady";
 type Props = { params: Promise<{ slug: string }> };
 export function generateStaticParams() {
   return Object.keys(infoPages).map((slug) => ({ slug }));
@@ -51,6 +52,7 @@ export default async function Page({ params }: Props) {
           </Link>
         )}
       </nav>
+      <RouteReady />
     </article>
   );
 }

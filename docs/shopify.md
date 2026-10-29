@@ -26,6 +26,8 @@ Fuentes oficiales verificadas:
 7. Usar imágenes en `cdn.shopify.com`. Si se usa otra CDN, autorizar su dominio explícitamente en next.config.ts.
 8. Reiniciar el servidor y probar catálogo, producto, variantes, stock, carrito y checkout en una tienda de desarrollo. El Home consulta los primeros cinco productos del proveedor para sus destacados; no traslada precios/descuentos mock a Shopify.
 
+El acceso a clientes no crea sesiones en el storefront Next.js: la ruta `/cuenta` delega al login alojado en Shopify usando el dominio configurado en `SHOPIFY_STORE_DOMAIN`. En modo mock la página informa que el acceso aún no está habilitado.
+
 ## Instrucción obligatoria para la imagen principal de producto
 
 El primer medio de cada producto Shopify (`images[0]` / imagen destacada) es el que muestran el carrusel de portada y las tarjetas del catálogo. Debe tener formato cuadrado 1:1, fondo blanco puro y uniforme `#FFFFFF`, y mostrar la pieza completa, centrada y claramente reconocible. No usar fondo marfil, beige, lino, piedra, textura, gradiente ni utilería en la imagen principal. Las fotos de modelo, detalles y estilo de vida pueden ir después en la galería.

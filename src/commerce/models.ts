@@ -66,6 +66,7 @@ export type CheckoutResult =
   | { type: "session"; sessionId: string; path: string };
 export interface CommerceProvider {
   readonly name: "mock" | "shopify" | "medusa";
+  getAccountLoginUrl(): string | null;
   getProducts(query?: CatalogQuery): Promise<Product[]>;
   getProduct(slug: string): Promise<Product | null>;
   getCollections(): Promise<Collection[]>;

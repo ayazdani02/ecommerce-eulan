@@ -7,6 +7,7 @@ import {
   type CourierId,
   type DeliveryEstimate,
   type EnviaCapitalLocation,
+  formatCourierName,
   identifyCourier,
   normalizeEstimate,
 } from "./delivery-estimate";
@@ -97,7 +98,7 @@ function configuration() {
     ? priorityRaw
         .split(",")
         .map((value) => identifyCourier(value.trim()))
-        .filter((value): value is CourierId => value !== null)
+        .filter((value) => value !== null)
     : COURIER_PRIORITY_DEFAULT;
   const uniquePriority = [...new Set(priority)];
   for (const courier of COURIER_PRIORITY_DEFAULT) {
@@ -268,10 +269,12 @@ function carrierIdentifier(carrier: EnviaCarrier) {
   return typeof exact === "string" ? exact : null;
 }
 
-function isActiveForCourier(carrier: EnviaCarrier, courier: CourierId) {
-  return identifyCourier(
-    `${typeof carrier.name === "string" ? carrier.name : ""} ${typeof carrier.carrier === "string" ? carrier.carrier : ""} ${typeof carrier.description === "string" ? carrier.description : ""}`,
-  ) === courier;
+function courierId(identifier: string) {
+  return identifier
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 function rateRequest(config: ReturnType<typeof configuration>, destination: EnviaCapitalLocation, carrier: string) {
@@ -309,14 +312,22 @@ async function quoteCommune(communeId: ChileCommuneId, config: ReturnType<typeof
     locationForCity(commune.name, commune.state, config.cacheTtlSeconds),
     activeCarriers(config.token, config.cacheTtlSeconds),
   ]);
-  const selectedCarriers = COURIER_PRIORITY_DEFAULT.flatMap((courier) => {
-    const match = carriers.find((carrier) => isActiveForCourier(carrier, courier));
-    const identifier = match && carrierIdentifier(match);
-    return match && identifier ? [{ courier, identifier }] : [];
-  });
+  const selectedCarriers = [...new Map(
+    carriers.flatMap((carrier) => {
+      const identifier = carrierIdentifier(carrier);
+      if (!identifier) return [];
+      const courier = courierId(identifier);
+      if (!courier) return [];
+      return [[courier, {
+        courier,
+        courierName: formatCourierName(identifier),
+        identifier,
+      }] as const];
+    }),
+  ).values()];
   if (!selectedCarriers.length) {
     if (process.env.NODE_ENV !== "production") {
-      console.warn("[envia-estimate] No supported active carriers matched", {
+      console.warn("[envia-estimate] No active carriers returned by Envia", {
         availableCarriers: carriers.map(carrierIdentifier).filter(Boolean),
       });
     }
@@ -324,7 +335,7 @@ async function quoteCommune(communeId: ChileCommuneId, config: ReturnType<typeof
   }
 
   const rates = await Promise.all(
-    selectedCarriers.map(async ({ courier, identifier }) => {
+    selectedCarriers.map(async ({ courier, courierName, identifier }) => {
       try {
         const response = await postJson(
           `${ENVIA_API}/ship/rate/`,
@@ -340,6 +351,7 @@ async function quoteCommune(communeId: ChileCommuneId, config: ReturnType<typeof
           return [
             {
               courier,
+              courierName,
               carrier: rate.carrier,
               service: rate.service,
               deliveryEstimate: rate.deliveryEstimate,
@@ -373,6 +385,7 @@ async function quoteCommune(communeId: ChileCommuneId, config: ReturnType<typeof
           deliveryDate: record.deliveryDate,
         },
         courier,
+        courierName: record.courierName,
         now,
         preparationHours: config.preparationHours,
         cutoffTime: config.cutoffTime,
@@ -389,7 +402,7 @@ async function quoteCommune(communeId: ChileCommuneId, config: ReturnType<typeof
   if (!orderedEstimates.length) {
     if (process.env.NODE_ENV !== "production") {
       console.warn("[envia-estimate] No usable delivery estimate returned", {
-        matchedCarriers: selectedCarriers.map(({ courier }) => courier),
+        queriedCarriers: selectedCarriers.map(({ courierName }) => courierName),
         rateRecords: rates.reduce((count, records) => count + records.length, 0),
       });
     }
@@ -409,6 +422,7 @@ export async function getDeliveryOptions(communeId: string) {
   const config = configuration();
   const key = hash(
     JSON.stringify({
+      carrierQueryVersion: "all-envia-carriers-v2",
       communeId,
       origin: config.origin,
       package: config.pkg,

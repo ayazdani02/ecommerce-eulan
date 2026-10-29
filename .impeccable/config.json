@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-10-27T20:59:01.077Z",
         "reason": "Agent: AGENTS.md requires preserving src/app/original.css as the original stylesheet; leave this baseline radio keyframe unchanged."
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "src/app/storefront.css"
+        ],
+        "createdAt": "2026-10-29T06:45:30.780Z",
+        "reason": "User confirmed the navigation progress bar should visibly fill to completion; these width transitions finish that progress feedback."
       }
     ]
   }

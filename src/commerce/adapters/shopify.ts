@@ -227,6 +227,11 @@ async function mutation(
 }
 export const shopifyProvider: CommerceProvider = {
   name: "shopify",
+  getAccountLoginUrl() {
+    const domain = process.env.SHOPIFY_STORE_DOMAIN?.trim();
+    if (!domain || !/^[-a-z0-9]+\.myshopify\.com$/.test(domain)) return null;
+    return `https://${domain}/account/login`;
+  },
   async getProducts(query) {
     // Paginación completa del catálogo; no truncar silenciosamente al primer lote.
     let cursor: string | null = null;

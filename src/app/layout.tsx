@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { CartProvider } from "@/components/CartProvider";
 import { FavoritesProvider } from "@/components/FavoritesProvider";
 import { Header, PageFrame } from "@/components/Header";
+import { NavigationProgress } from "@/components/NavigationProgress";
 import { Footer } from "@/components/Footer";
 import "./original.css";
 import "./storefront.css";
@@ -41,6 +42,7 @@ export default function RootLayout({
         <CartProvider>
           <FavoritesProvider>
             <PageFrame>
+              <NavigationProgress />
               <a className="skip" href="#contenido">
                 Ir al contenido
               </a>

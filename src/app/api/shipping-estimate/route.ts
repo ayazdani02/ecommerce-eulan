@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sameOrigin } from "@/commerce/http";
 import { isChileCommuneId } from "@/integrations/envia/delivery-estimate";
-import { getDeliveryEstimate, getDeliveryOptions } from "@/integrations/envia/client";
+import { getDeliveryEstimate } from "@/integrations/envia/client";
 
 export const dynamic = "force-dynamic";
 
@@ -31,23 +31,11 @@ export async function POST(request: Request) {
         { status: 400, headers: { "Cache-Control": "no-store" } },
       );
     }
-    const includeAll =
-      process.env.NODE_ENV !== "production" &&
-      input !== null &&
-      typeof input === "object" &&
-      "includeAllOptions" in input &&
-      (input as { includeAllOptions?: unknown }).includeAllOptions === true;
-    const options = includeAll
-      ? await getDeliveryOptions(communeId)
-      : null;
-    const estimate = includeAll
-      ? options?.[0] ?? null
-      : await getDeliveryEstimate(communeId);
+    const estimate = await getDeliveryEstimate(communeId);
     return NextResponse.json(
       {
         estimate,
         reason: estimate ? null : "no_service",
-        ...(includeAll ? { options } : {}),
       },
       { headers: { "Cache-Control": "no-store" } },
     );

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { primaryNavigation } from "@/navigation";
+import { footerHelpNavigation, primaryNavigation } from "@/navigation";
 export function Footer({ demo }: { demo: boolean }) {
   return (
     <footer className="site-footer">
@@ -17,17 +17,9 @@ export function Footer({ demo }: { demo: boolean }) {
         </div>
       </div>
       <nav className="footer-help" aria-label="Información y ayuda">
-        {[
-          ["contacto", "Contacto"],
-          ["preguntas-frecuentes", "Preguntas frecuentes"],
-          ["envios", "Envíos"],
-          ["cambios-y-devoluciones", "Cambios y devoluciones"],
-          ["cuidados", "Cuidados"],
-          ["privacidad", "Privacidad"],
-          ["terminos", "Términos"],
-        ].map(([slug, title]) => (
-          <Link key={slug} href={`/${slug}`}>
-            {title}
+        {footerHelpNavigation.map(({ href, label }) => (
+          <Link key={href} href={href}>
+            {label}
           </Link>
         ))}
       </nav>

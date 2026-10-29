@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { commerce } from "@/commerce/provider";
 import { FavoritesPage } from "@/components/FavoritesPage";
+import { RouteReady } from "@/components/RouteReady";
 
 export const metadata: Metadata = {
   title: "Favoritos",
@@ -9,5 +10,10 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const products = await commerce().getProducts();
-  return <FavoritesPage products={products} />;
+  return (
+    <>
+      <FavoritesPage products={products} />
+      <RouteReady />
+    </>
+  );
 }

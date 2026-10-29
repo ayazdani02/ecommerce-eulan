@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RouteReady } from "@/components/RouteReady";
 export default function NotFound() {
   return (
     <section className="editorial-page">
@@ -8,6 +9,7 @@ export default function NotFound() {
       <Link className="underlined" href="/catalogo">
         Volver a la colección
       </Link>
+      <RouteReady />
     </section>
   );
 }

@@ -17,6 +17,8 @@ import { Modal } from "./Modal";
 import { Icon } from "./Icon";
 import { DeliveryEstimator } from "./DeliveryEstimator";
 import { FavoriteToggle } from "./FavoriteToggle";
+import { ProductQualityStories } from "./ProductQualityStories";
+import { FeaturedProducts } from "./FeaturedProducts";
 type MaterialIconName =
   | "steel"
   | "gold"
@@ -103,7 +105,13 @@ function ProductInBagControl({
     </div>
   );
 }
-export function ProductDetail({ product }: { product: Product }) {
+export function ProductDetail({
+  product,
+  relatedProducts,
+}: {
+  product: Product;
+  relatedProducts: Product[];
+}) {
   const categoryLabel = product.category
     ? product.category.toLocaleUpperCase("es")
     : product.category;
@@ -622,6 +630,15 @@ export function ProductDetail({ product }: { product: Product }) {
           </details>
         </div>
       </div>
+      {relatedProducts.length > 0 && (
+        <FeaturedProducts
+          products={relatedProducts}
+          title="También podría gustarte"
+          ariaLabel="Productos relacionados"
+          trackId="related-products-track"
+        />
+      )}
+      <ProductQualityStories />
       {showStickyBar && (
         <aside className="sticky-product-bar" aria-label={`Compra rápida: ${product.name}`}>
           <div className="sticky-product-bar__inner">

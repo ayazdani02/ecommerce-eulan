@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { RouteReady } from "@/components/RouteReady";
 export default function ErrorPage({
   reset,
 }: {
@@ -19,6 +20,7 @@ export default function ErrorPage({
           Volver al inicio
         </Link>
       </div>
+      <RouteReady />
     </section>
   );
 }

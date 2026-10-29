@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { commerce } from "@/commerce/provider";
 import { ProductCard } from "./ProductCard";
+import { RouteReady } from "./RouteReady";
 import type { CatalogQuery } from "@/commerce/models";
 export type SearchParams = Record<string, string | string[] | undefined>;
 const value = (v: string | string[] | undefined) =>
@@ -127,6 +128,7 @@ export async function Catalog({
           </Link>
         </section>
       )}
+      <RouteReady />
     </>
   );
 }
